@@ -4,20 +4,30 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Tichu 計分器</title>
+<script>try{var t=localStorage.getItem('tichu-scorer-theme');if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);}catch(e){}</script>
 <style>
 :root{
   --bg:#eceff3;--surface:#ffffff;--ink:#14181f;--muted:#5b6472;--line:#d5dae1;
   --a:#2155d6;--a-tint:#e3ebfc;--b:#b91c1c;--b-tint:#fee2e2;
   --ok:#11794a;--ok-tint:#dcf3e7;--bad:#4b5563;--bad-tint:#e5e7eb;
   --on:#ffffff;
+  color-scheme:light;
 }
 @media (prefers-color-scheme:dark){
-  :root{
+  :root:not([data-theme="light"]){
     --bg:#0f1217;--surface:#181c23;--ink:#eef1f5;--muted:#9aa4b2;--line:#2c333d;
     --a:#7aa2ff;--a-tint:#17233f;--b:#f87171;--b-tint:#3a1717;
     --ok:#4cc38a;--ok-tint:#12301f;--bad:#9ca3af;--bad-tint:#2a2f37;
     --on:#0f1217;
+    color-scheme:dark;
   }
+}
+:root[data-theme="dark"]{
+  --bg:#0f1217;--surface:#181c23;--ink:#eef1f5;--muted:#9aa4b2;--line:#2c333d;
+  --a:#7aa2ff;--a-tint:#17233f;--b:#f87171;--b-tint:#3a1717;
+  --ok:#4cc38a;--ok-tint:#12301f;--bad:#9ca3af;--bad-tint:#2a2f37;
+  --on:#0f1217;
+  color-scheme:dark;
 }
 *{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%}
@@ -26,11 +36,14 @@ body{margin:0;background:var(--bg);color:var(--ink);
   font-size:16px;line-height:1.5;
   padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
 main{max-width:480px;margin:0 auto;padding:14px 14px 40px}
-h1{font-size:20px;font-weight:600;margin:0}
+h1{font-size:20px;font-weight:600;margin:0;white-space:nowrap}
 h2{font-size:15px;font-weight:600;margin:0 0 10px}
-.top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
-.goal{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--muted)}
-.goal select{font:inherit;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:10px;min-height:44px;width:96px;padding:0 10px;text-align:center;text-align-last:center}
+.top{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px 10px;margin-bottom:12px}
+.goal{display:flex;align-items:center;gap:6px;font-size:14px;color:var(--muted);white-space:nowrap}
+.top-r{display:flex;align-items:center;gap:8px;margin-left:auto}
+.theme{font-size:14px;padding:0 10px;flex:none}
+@media (max-width:370px){h1{font-size:18px}.goal select{width:78px;padding:0 6px}.theme{padding:0 8px}.top-r{gap:6px}}
+.goal select{font:inherit;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:10px;min-height:44px;width:88px;padding:0 8px;text-align:center;text-align-last:center}
 input{font:inherit;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:10px;
   min-height:44px;padding:0 10px;width:100%}
 input:disabled{opacity:.4}
@@ -105,7 +118,10 @@ input[type=range]:disabled{opacity:.35}
 <main>
   <div class="top">
     <h1>Tichu 計分器</h1>
-    <label class="goal">目標分數 <select id="goal" aria-label="目標分數"></select></label>
+    <div class="top-r">
+      <button type="button" class="theme" id="theme">深色</button>
+      <label class="goal">目標分數 <select id="goal" aria-label="目標分數"></select></label>
+    </div>
   </div>
 
   <section class="totals" aria-label="總分">
@@ -404,6 +420,27 @@ input[type=range]:disabled{opacity:.35}
   $('commit').addEventListener('click',commit);
   $('undo').addEventListener('click',undo);
   $('reset').addEventListener('click',reset);
+  var TKEY='tichu-scorer-theme';
+  var mq=window.matchMedia?window.matchMedia('(prefers-color-scheme: dark)'):null;
+  function getTheme(){try{var t=localStorage.getItem(TKEY);return(t==='light'||t==='dark')?t:'';}catch(e){return'';}}
+  function isDark(){var t=getTheme();return t?t==='dark':!!(mq&&mq.matches);}
+  function applyTheme(){
+    var t=getTheme();
+    if(t)document.documentElement.setAttribute('data-theme',t);
+    else document.documentElement.removeAttribute('data-theme');
+    var d=isDark();
+    $('theme').textContent=d?'淺色':'深色';
+    $('theme').setAttribute('aria-label',d?'切換成淺色':'切換成深色');
+  }
+  $('theme').addEventListener('click',function(){
+    var next=isDark()?'light':'dark';
+    try{localStorage.setItem(TKEY,next);}catch(e){}
+    document.documentElement.setAttribute('data-theme',next);
+    applyTheme();
+  });
+  if(mq){if(mq.addEventListener)mq.addEventListener('change',applyTheme);else if(mq.addListener)mq.addListener(applyTheme);}
+  applyTheme();
+
   function snapGoal(v){
     var best=GOALS[GOALS.length-1];
     GOALS.forEach(function(g){if(Math.abs(g-v)<=Math.abs(best-v))best=g;});
