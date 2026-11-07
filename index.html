@@ -36,14 +36,24 @@ body{margin:0;background:var(--bg);color:var(--ink);
   font-size:16px;line-height:1.5;
   padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
 main{max-width:480px;margin:0 auto;padding:14px 14px 40px}
-h1{font-size:20px;font-weight:600;margin:0;white-space:nowrap}
+h1{font-size:17px;font-weight:600;margin:0;white-space:nowrap}
 h2{font-size:15px;font-weight:600;margin:0 0 10px}
-.top{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px 10px;margin-bottom:12px}
-.goal{display:flex;align-items:center;gap:6px;font-size:14px;color:var(--muted);white-space:nowrap}
-.top-r{display:flex;align-items:center;gap:8px;margin-left:auto}
-.theme{font-size:14px;padding:0 10px;flex:none}
-@media (max-width:370px){h1{font-size:18px}.goal select{width:78px;padding:0 6px}.theme{padding:0 8px}.top-r{gap:6px}}
-.goal select{font:inherit;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:10px;min-height:44px;width:88px;padding:0 8px;text-align:center;text-align-last:center}
+.top{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px 6px;margin-bottom:12px}
+.goal{display:flex;align-items:center;gap:4px;font-size:13px;color:var(--muted);white-space:nowrap}
+.top-r{display:flex;align-items:center;gap:5px;margin-left:auto}
+.theme{font-size:14px;padding:0 7px;flex:none}
+.goal select{font:inherit;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:10px;min-height:44px;width:70px;padding:0 4px;text-align:center;text-align-last:center}
+.tt .names{font-size:13px;opacity:.85;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
+.ov{position:fixed;inset:0;background:var(--bg);z-index:10;overflow:auto;-webkit-overflow-scrolling:touch}
+.ov main{padding-top:14px}
+.ov h2{font-size:18px;margin:4px 0 14px}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.cols .cap{font-size:15px;margin-bottom:8px}
+.cols input{margin-bottom:8px;font-size:16px}
+.ovacts{display:flex;gap:10px;margin-top:10px}
+.ovacts button{flex:1;min-height:48px}
+.ovacts .ok2{background:var(--ink);color:var(--bg);border-color:var(--ink);font-weight:600}
+body.lock{overflow:hidden}
 input{font:inherit;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:10px;
   min-height:44px;padding:0 10px;width:100%}
 input:disabled{opacity:.4}
@@ -51,7 +61,7 @@ button{font:inherit;color:var(--ink);background:var(--surface);border:1px solid 
   min-height:44px;padding:0 10px;cursor:pointer;touch-action:manipulation}
 button:disabled{opacity:.3;cursor:not-allowed}
 :focus-visible{outline:3px solid var(--a);outline-offset:2px}
-.totals{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.totals{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px;margin-bottom:12px}
 .tt{border-radius:14px;padding:12px 14px}
 .tt.A{background:var(--a-tint);color:var(--a)}
 .tt.B{background:var(--b-tint);color:var(--b)}
@@ -120,13 +130,14 @@ input[type=range]:disabled{opacity:.35}
     <h1>Tichu 計分器</h1>
     <div class="top-r">
       <button type="button" class="theme" id="theme">深色</button>
+      <button type="button" class="theme" id="edit">編輯</button>
       <label class="goal">目標分數 <select id="goal" aria-label="目標分數"></select></label>
     </div>
   </div>
 
   <section class="totals" aria-label="總分">
-    <div class="tt A"><div class="nm">A 隊</div><div class="sc" id="ta">0</div><div class="gap" id="ga"></div></div>
-    <div class="tt B"><div class="nm">B 隊</div><div class="sc" id="tb">0</div><div class="gap" id="gb"></div></div>
+    <div class="tt A"><div class="nm">A 隊</div><div class="names" id="na" hidden></div><div class="sc" id="ta">0</div><div class="gap" id="ga"></div></div>
+    <div class="tt B"><div class="nm">B 隊</div><div class="names" id="nb" hidden></div><div class="sc" id="tb">0</div><div class="gap" id="gb"></div></div>
   </section>
   <div class="win" id="win" hidden></div>
 
@@ -172,10 +183,32 @@ input[type=range]:disabled{opacity:.35}
   </section>
 </main>
 
+<div class="ov" id="ov" hidden role="dialog" aria-modal="true" aria-labelledby="ovt">
+<main>
+  <h2 id="ovt">編輯隊員</h2>
+  <section class="panel">
+    <div class="cols">
+      <div><div class="cap A">A 隊</div>
+        <input id="nA0" maxlength="12" placeholder="名字 1" aria-label="A 隊名字 1">
+        <input id="nA1" maxlength="12" placeholder="名字 2" aria-label="A 隊名字 2">
+        <input id="nA2" maxlength="12" placeholder="名字 3" aria-label="A 隊名字 3"></div>
+      <div><div class="cap B">B 隊</div>
+        <input id="nB0" maxlength="12" placeholder="名字 1" aria-label="B 隊名字 1">
+        <input id="nB1" maxlength="12" placeholder="名字 2" aria-label="B 隊名字 2">
+        <input id="nB2" maxlength="12" placeholder="名字 3" aria-label="B 隊名字 3"></div>
+    </div>
+    <div class="ovacts">
+      <button type="button" id="nreset">全部重設</button>
+      <button type="button" class="ok2" id="nok">確認</button>
+    </div>
+  </section>
+</main>
+</div>
+
 <script>
 (function(){
   var KEY='tichu-scorer-v1';
-  var S={goal:1000,hist:[]};
+  var S={goal:1000,hist:[],names:{A:['','',''],B:['','','']}};
   var PMIN=-25,PMAX=225,PDEF=100;
   var GOALS=[500,600,700,800,900,1000];
   var cur=blank();
@@ -198,6 +231,10 @@ input[type=range]:disabled{opacity:.35}
         var d=JSON.parse(raw);
         if(d&&typeof d.goal==='number'&&d.goal>0)S.goal=d.goal;
         if(d&&Array.isArray(d.hist))S.hist=d.hist.filter(function(r){return r&&typeof r.a==='number'&&typeof r.b==='number';});
+        if(d&&d.names)['A','B'].forEach(function(k){
+          var arr=d.names[k];
+          if(Array.isArray(arr))for(var i=0;i<3;i++)S.names[k][i]=typeof arr[i]==='string'?arr[i].slice(0,12):'';
+        });
       }
     }catch(e){}
   }
@@ -310,8 +347,8 @@ input[type=range]:disabled{opacity:.35}
     var w=$('win');
     if(t.a>=S.goal||t.b>=S.goal){
       w.hidden=false;
-      if(t.a>t.b)w.textContent='A 隊獲勝';
-      else if(t.b>t.a)w.textContent='B 隊獲勝';
+      if(t.a>t.b)w.textContent='A 隊獲勝'+withNames('A');
+      else if(t.b>t.a)w.textContent='B 隊獲勝'+withNames('B');
       else w.textContent='雙方同分，再打一局';
     }else{w.hidden=true;w.textContent='';}
   }
@@ -456,7 +493,38 @@ input[type=range]:disabled{opacity:.35}
     if(GOALS.indexOf(v)>=0){S.goal=v;save();renderTotals();}
   });
 
+  function nameList(k){return S.names[k].map(function(x){return x.trim();}).filter(function(x){return x;});}
+  function withNames(k){var l=nameList(k);return l.length?'（'+l.join('、')+'）':'';}
+  function renderNames(){
+    ['A','B'].forEach(function(k){
+      var el=$(k==='A'?'na':'nb'),l=nameList(k);
+      el.textContent=l.join('、');
+      el.hidden=!l.length;
+    });
+  }
+  function openEdit(){
+    ['A','B'].forEach(function(k){for(var i=0;i<3;i++)$('n'+k+i).value=S.names[k][i];});
+    $('ov').hidden=false;document.body.classList.add('lock');
+  }
+  function closeEdit(){
+    ['A','B'].forEach(function(k){for(var i=0;i<3;i++)S.names[k][i]=$('n'+k+i).value.trim().slice(0,12);});
+    save();
+    $('ov').hidden=true;document.body.classList.remove('lock');
+    renderNames();renderTotals();
+    $('edit').focus();
+  }
+  var nrArmed=false,nrTimer=null;
+  function nrDisarm(){nrArmed=false;clearTimeout(nrTimer);$('nreset').textContent='全部重設';}
+  $('edit').addEventListener('click',openEdit);
+  $('nok').addEventListener('click',function(){nrDisarm();closeEdit();});
+  $('nreset').addEventListener('click',function(){
+    if(!nrArmed){nrArmed=true;$('nreset').textContent='再按一次清空';nrTimer=setTimeout(nrDisarm,3000);return;}
+    nrDisarm();
+    ['A','B'].forEach(function(k){for(var i=0;i<3;i++)$('n'+k+i).value='';});
+  });
+
   load();
+  renderNames();
   S.goal=snapGoal(S.goal);
   $('goal').value=String(S.goal);
   renderAll();
