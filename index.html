@@ -50,11 +50,6 @@ button:disabled{opacity:.3;cursor:not-allowed}
 .lbl{font-size:13px;color:var(--muted);margin:12px 0 6px}
 .lbl:first-of-type{margin-top:0}
 .pair{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.fld{display:flex;gap:6px}
-.fld input{text-align:center;font-size:22px;font-weight:600;font-variant-numeric:tabular-nums;min-width:0}
-.fld button{width:44px;padding:0;flex:none}
-.fld.A input{border-color:var(--a)}
-.fld.B input{border-color:var(--b)}
 .cap{font-size:13px;font-weight:600;margin-bottom:4px}
 .cap.A{color:var(--a)}.cap.B{color:var(--b)}
 .seg{display:flex;gap:6px}
@@ -79,6 +74,25 @@ button:disabled{opacity:.3;cursor:not-allowed}
 .acts button{flex:1}
 .hd{display:flex;justify-content:space-between;align-items:baseline}
 .hd span{font-size:13px;color:var(--muted)}
+.pts{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.pv{display:block;width:100%;border-radius:10px;padding:6px 10px;text-align:center;border:3px solid transparent;min-height:0}
+.pv.A{background:var(--a-tint);color:var(--a)}
+.pv.B{background:var(--b-tint);color:var(--b)}
+.pv.A[aria-pressed="true"]{border-color:var(--a)}
+.pv.B[aria-pressed="true"]{border-color:var(--b)}
+.pv b{display:block;font-size:30px;line-height:1.2;font-variant-numeric:tabular-nums}
+.pv small{font-size:12px;opacity:.85}
+.pv:disabled{opacity:.5}
+.adj{display:flex;align-items:center;gap:10px;margin-top:10px}
+.rngw{flex:1;min-width:0}
+input[type=range]{width:100%;min-height:44px;padding:0;border:0;background:transparent;accent-color:var(--a)}
+input[type=range].B{accent-color:var(--b)}
+input[type=range]:disabled{opacity:.35}
+.rng-ends{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-top:-6px}
+.step{display:flex;flex-direction:column;gap:6px;flex:none}
+.step button{width:56px;min-height:44px;font-size:24px;font-weight:600;line-height:1;padding:0}
+.step.A button{color:var(--a);border-color:var(--a)}
+.step.B button{color:var(--b);border-color:var(--b)}
 </style>
 </head>
 <body>
@@ -96,12 +110,20 @@ button:disabled{opacity:.3;cursor:not-allowed}
 
   <section class="panel">
     <h2>本局</h2>
-    <div class="lbl">牌面分（填一邊，另一邊自動 = 200 − 它）</div>
-    <div class="pair">
-      <div><div class="cap A">A 隊</div>
-        <div class="fld A"><input id="ia" type="number" inputmode="numeric" aria-label="A 隊牌面分"><button id="sa" aria-label="A 隊正負切換">±</button></div></div>
-      <div><div class="cap B">B 隊</div>
-        <div class="fld B"><input id="ib" type="number" inputmode="numeric" aria-label="B 隊牌面分"><button id="sb" aria-label="B 隊正負切換">±</button></div></div>
+    <div class="lbl">牌面分（點隊伍切換，另一隊自動補到 200）</div>
+    <div class="pts">
+      <button type="button" class="pv A" id="pvA"><small id="la">A 隊</small><b id="va">100</b></button>
+      <button type="button" class="pv B" id="pvB"><small id="lb">B 隊</small><b id="vb">100</b></button>
+    </div>
+    <div class="adj">
+      <div class="rngw">
+        <input id="rng" type="range" min="-25" max="225" step="5" aria-label="牌面分滑桿">
+        <div class="rng-ends"><span>−25</span><span>100</span><span>225</span></div>
+      </div>
+      <div class="step" id="step">
+        <button type="button" id="plus" aria-label="加 5 分">+</button>
+        <button type="button" id="minus" aria-label="減 5 分">−</button>
+      </div>
     </div>
 
     <div class="lbl">Win-Win（同隊 1-2-3 名，該隊 +300）</div>
@@ -132,10 +154,11 @@ button:disabled{opacity:.3;cursor:not-allowed}
 (function(){
   var KEY='tichu-scorer-v1';
   var S={goal:1000,hist:[]};
+  var PMIN=-25,PMAX=225,PDEF=100;
   var cur=blank();
   var resetArmed=false,resetTimer=null;
 
-  function blank(){return{dbl:'none',A:{t:0,r:0},B:{t:0,r:0}};}
+  function blank(){return{dbl:'none',pa:PDEF,side:'A',A:{t:0,r:0},B:{t:0,r:0}};}
   function $(id){return document.getElementById(id);}
   function other(k){return k==='A'?'B':'A';}
   function fmt(x){return(x>=0?'+':'')+x;}
@@ -201,10 +224,7 @@ button:disabled{opacity:.3;cursor:not-allowed}
     var a,b,notes=[],err='';
     if(cur.dbl==='A'){a=300;b=0;}
     else if(cur.dbl==='B'){a=0;b=300;}
-    else{
-      a=parse($('ia').value);b=parse($('ib').value);
-      if(isNaN(a)||isNaN(b)){err='請輸入牌面分';a=isNaN(a)?0:a;b=isNaN(b)?0:b;}
-    }
+    else{a=cur.pa;b=200-cur.pa;}
     if(cur.dbl!=='none')notes.push(cur.dbl+' 隊 Win-Win');
     ['A','B'].forEach(function(k){
       var c=cur[k];
@@ -225,7 +245,7 @@ button:disabled{opacity:.3;cursor:not-allowed}
       {label:'B Win-Win',value:'B',on:cur.dbl==='B'}
     ],setDbl);
     var dis=cur.dbl!=='none';
-    $('ia').disabled=dis;$('ib').disabled=dis;$('sa').disabled=dis;$('sb').disabled=dis;
+    renderPts();
     ['A','B'].forEach(function(k){
       var c=cur[k];
       makeSeg($('t'+k),[
@@ -302,17 +322,37 @@ button:disabled{opacity:.3;cursor:not-allowed}
 
   function renderAll(){renderTotals();renderHist();renderRound();}
 
-  function sync(from){
-    var a=$('ia'),b=$('ib');
-    if(from==='a'){var v=parse(a.value);b.value=isNaN(v)?'':String(200-v);}
-    else{var w=parse(b.value);a.value=isNaN(w)?'':String(200-w);}
+  function sideVal(){return cur.side==='A'?cur.pa:200-cur.pa;}
+  function renderPts(){
+    var dis=cur.dbl!=='none',s=cur.side,v=sideVal();
+    var rng=$('rng');
+    rng.value=String(v);
+    rng.className=s;
+    rng.disabled=dis;
+    rng.setAttribute('aria-label',s+' 隊牌面分滑桿');
+    $('step').className='step '+s;
+    $('plus').disabled=dis||v>=PMAX;
+    $('minus').disabled=dis||v<=PMIN;
+    $('va').textContent=dis?'—':cur.pa;
+    $('vb').textContent=dis?'—':(200-cur.pa);
+    $('la').textContent=s==='A'?'A 隊':'A 隊（自動）';
+    $('lb').textContent=s==='B'?'B 隊':'B 隊（自動）';
+    $('pvA').setAttribute('aria-pressed',s==='A'?'true':'false');
+    $('pvB').setAttribute('aria-pressed',s==='B'?'true':'false');
+    $('pvA').disabled=dis;$('pvB').disabled=dis;
+  }
+  function setPts(v){
+    v=parse(v);
+    if(isNaN(v))return;
+    v=Math.max(PMIN,Math.min(PMAX,Math.round(v/5)*5));
+    cur.pa=cur.side==='A'?v:200-v;
+    renderPts();
     updatePreview();
   }
-  function flip(id,from){
-    var el=$(id),v=parse(el.value);
-    if(isNaN(v))return;
-    el.value=String(-v);
-    sync(from);
+  function setSide(s){
+    if(cur.dbl!=='none')return;
+    cur.side=s;
+    renderPts();
   }
 
   function commit(){
@@ -322,7 +362,6 @@ button:disabled{opacity:.3;cursor:not-allowed}
     S.hist.push({a:r.a,b:r.b,n:r.notes});
     save();
     cur=blank();
-    $('ia').value='';$('ib').value='';
     renderAll();
   }
 
@@ -345,15 +384,15 @@ button:disabled{opacity:.3;cursor:not-allowed}
     disarmReset();
     S.hist=[];save();
     cur=blank();
-    $('ia').value='';$('ib').value='';
     $('err').textContent='';
     renderAll();
   }
 
-  $('ia').addEventListener('input',function(){sync('a');});
-  $('ib').addEventListener('input',function(){sync('b');});
-  $('sa').addEventListener('click',function(){flip('ia','a');});
-  $('sb').addEventListener('click',function(){flip('ib','b');});
+  $('rng').addEventListener('input',function(){setPts(this.value);});
+  $('plus').addEventListener('click',function(){setPts(sideVal()+5);});
+  $('minus').addEventListener('click',function(){setPts(sideVal()-5);});
+  $('pvA').addEventListener('click',function(){setSide('A');});
+  $('pvB').addEventListener('click',function(){setSide('B');});
   $('commit').addEventListener('click',commit);
   $('undo').addEventListener('click',undo);
   $('reset').addEventListener('click',reset);
