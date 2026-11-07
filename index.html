@@ -1,0 +1,371 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Tichu 計分器</title>
+<style>
+:root{
+  --bg:#eceff3;--surface:#ffffff;--ink:#14181f;--muted:#5b6472;--line:#d5dae1;
+  --a:#2155d6;--a-tint:#e3ebfc;--b:#b8470b;--b-tint:#fbe9dc;
+  --ok:#11794a;--ok-tint:#dcf3e7;--bad:#b42318;--bad-tint:#fde4e1;
+  --on:#ffffff;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#0f1217;--surface:#181c23;--ink:#eef1f5;--muted:#9aa4b2;--line:#2c333d;
+    --a:#7aa2ff;--a-tint:#17233f;--b:#ff9a5c;--b-tint:#3a2314;
+    --ok:#4cc38a;--ok-tint:#12301f;--bad:#ff8a80;--bad-tint:#3a1a17;
+    --on:#0f1217;
+  }
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font-family:"PingFang TC","Noto Sans TC","Microsoft JhengHei",system-ui,-apple-system,sans-serif;
+  font-size:16px;line-height:1.5;
+  padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
+main{max-width:480px;margin:0 auto;padding:14px 14px 40px}
+h1{font-size:20px;font-weight:600;margin:0}
+h2{font-size:15px;font-weight:600;margin:0 0 10px}
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
+.goal{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--muted)}
+.goal input{width:84px;text-align:center}
+input{font:inherit;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:10px;
+  min-height:44px;padding:0 10px;width:100%}
+input:disabled{opacity:.4}
+button{font:inherit;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:10px;
+  min-height:44px;padding:0 10px;cursor:pointer;touch-action:manipulation}
+button:disabled{opacity:.3;cursor:not-allowed}
+:focus-visible{outline:3px solid var(--a);outline-offset:2px}
+.totals{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.tt{border-radius:14px;padding:12px 14px}
+.tt.A{background:var(--a-tint);color:var(--a)}
+.tt.B{background:var(--b-tint);color:var(--b)}
+.tt .nm{font-size:14px;font-weight:600}
+.tt .sc{font-size:48px;font-weight:700;line-height:1.1;font-variant-numeric:tabular-nums}
+.tt .gap{font-size:13px;opacity:.85}
+.win{margin:-2px 0 12px;padding:10px 14px;border-radius:12px;background:var(--ok-tint);color:var(--ok);font-weight:600;text-align:center}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px}
+.lbl{font-size:13px;color:var(--muted);margin:12px 0 6px}
+.lbl:first-of-type{margin-top:0}
+.pair{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.fld{display:flex;gap:6px}
+.fld input{text-align:center;font-size:22px;font-weight:600;font-variant-numeric:tabular-nums;min-width:0}
+.fld button{width:44px;padding:0;flex:none}
+.fld.A input{border-color:var(--a)}
+.fld.B input{border-color:var(--b)}
+.cap{font-size:13px;font-weight:600;margin-bottom:4px}
+.cap.A{color:var(--a)}.cap.B{color:var(--b)}
+.seg{display:flex;gap:6px}
+.seg button{flex:1;min-width:0}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.seg.tA button[aria-pressed="true"]{background:var(--a);border-color:var(--a);color:var(--on)}
+.seg.tB button[aria-pressed="true"]{background:var(--b);border-color:var(--b);color:var(--on)}
+.seg button.ok[aria-pressed="true"]{background:var(--ok);border-color:var(--ok);color:var(--on)}
+.seg button.bad[aria-pressed="true"]{background:var(--bad);border-color:var(--bad);color:var(--on)}
+.call{display:flex;flex-direction:column;gap:6px}
+.sum{display:flex;justify-content:space-between;align-items:center;margin:14px 0 8px;padding:10px 12px;border-radius:10px;background:var(--bg)}
+.sum b{font-variant-numeric:tabular-nums;font-size:18px}
+.err{color:var(--bad);font-size:14px;min-height:21px;margin-bottom:6px}
+.go{width:100%;background:var(--ink);color:var(--bg);border-color:var(--ink);font-weight:600;font-size:17px;min-height:52px}
+.hist{list-style:none;margin:0;padding:0}
+.hist li{padding:8px 0;border-top:1px solid var(--line)}
+.hist li:first-child{border-top:0}
+.hist .r1{display:flex;justify-content:space-between;gap:8px;font-variant-numeric:tabular-nums}
+.hist .r2{font-size:13px;color:var(--muted)}
+.empty{color:var(--muted);font-size:14px}
+.acts{display:flex;gap:10px;margin-top:12px}
+.acts button{flex:1}
+.hd{display:flex;justify-content:space-between;align-items:baseline}
+.hd span{font-size:13px;color:var(--muted)}
+</style>
+</head>
+<body>
+<main>
+  <div class="top">
+    <h1>Tichu 計分器</h1>
+    <label class="goal">目標分數 <input id="goal" type="number" inputmode="numeric" aria-label="目標分數"></label>
+  </div>
+
+  <section class="totals" aria-label="總分">
+    <div class="tt A"><div class="nm">A 隊</div><div class="sc" id="ta">0</div><div class="gap" id="ga"></div></div>
+    <div class="tt B"><div class="nm">B 隊</div><div class="sc" id="tb">0</div><div class="gap" id="gb"></div></div>
+  </section>
+  <div class="win" id="win" hidden></div>
+
+  <section class="panel">
+    <h2>本局</h2>
+    <div class="lbl">牌面分（填一邊，另一邊自動 = 200 − 它）</div>
+    <div class="pair">
+      <div><div class="cap A">A 隊</div>
+        <div class="fld A"><input id="ia" type="number" inputmode="numeric" aria-label="A 隊牌面分"><button id="sa" aria-label="A 隊正負切換">±</button></div></div>
+      <div><div class="cap B">B 隊</div>
+        <div class="fld B"><input id="ib" type="number" inputmode="numeric" aria-label="B 隊牌面分"><button id="sb" aria-label="B 隊正負切換">±</button></div></div>
+    </div>
+
+    <div class="lbl">Win-Win（同隊 1-2-3 名，該隊 +300）</div>
+    <div class="seg" id="dbl"></div>
+
+    <div class="lbl">地主</div>
+    <div class="pair">
+      <div class="call"><div class="cap A">A 隊</div><div class="seg tA" id="tA"></div><div class="seg" id="rA"></div></div>
+      <div class="call"><div class="cap B">B 隊</div><div class="seg tB" id="tB"></div><div class="seg" id="rB"></div></div>
+    </div>
+
+    <div class="sum"><span>本局結算</span><b id="prev">A +0 ／ B +0</b></div>
+    <div class="err" id="err" role="alert"></div>
+    <button class="go" id="commit">確定這局</button>
+  </section>
+
+  <section class="panel">
+    <div class="hd"><h2>紀錄</h2><span id="cnt"></span></div>
+    <ul class="hist" id="hist"></ul>
+    <div class="acts">
+      <button id="undo">撤銷上一局</button>
+      <button id="reset">重新開始</button>
+    </div>
+  </section>
+</main>
+
+<script>
+(function(){
+  var KEY='tichu-scorer-v1';
+  var S={goal:1000,hist:[]};
+  var cur=blank();
+  var resetArmed=false,resetTimer=null;
+
+  function blank(){return{dbl:'none',A:{t:0,r:0},B:{t:0,r:0}};}
+  function $(id){return document.getElementById(id);}
+  function other(k){return k==='A'?'B':'A';}
+  function fmt(x){return(x>=0?'+':'')+x;}
+  function parse(v){
+    if(v===''||v==null)return NaN;
+    var n=Number(v);
+    return (isFinite(n)&&Math.floor(n)===n)?n:NaN;
+  }
+
+  function load(){
+    try{
+      var raw=localStorage.getItem(KEY);
+      if(raw){
+        var d=JSON.parse(raw);
+        if(d&&typeof d.goal==='number'&&d.goal>0)S.goal=d.goal;
+        if(d&&Array.isArray(d.hist))S.hist=d.hist.filter(function(r){return r&&typeof r.a==='number'&&typeof r.b==='number';});
+      }
+    }catch(e){}
+  }
+  function save(){
+    try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}
+  }
+
+  function blocked(k){
+    var o=other(k);
+    return cur.dbl===o||(cur[o].t>0&&cur[o].r===1);
+  }
+
+  function setDbl(x){
+    cur.dbl=x;
+    if(x!=='none'){
+      var o=other(x);
+      if(cur[o].t>0&&cur[o].r===1)cur[o].r=2;
+    }
+    renderRound();
+  }
+  function setCall(k,t){
+    cur[k].t=t;
+    if(t===0)cur[k].r=0;
+    renderRound();
+  }
+  function setResult(k,r){
+    if(r===1&&blocked(k))return;
+    cur[k].r=r;
+    renderRound();
+  }
+
+  function makeSeg(el,items,onPick){
+    el.innerHTML='';
+    items.forEach(function(it){
+      var b=document.createElement('button');
+      b.type='button';
+      b.textContent=it.label;
+      b.setAttribute('aria-pressed',it.on?'true':'false');
+      if(it.cls)b.className=it.cls;
+      if(it.disabled)b.disabled=true;
+      b.addEventListener('click',function(){onPick(it.value);});
+      el.appendChild(b);
+    });
+  }
+
+  function calc(){
+    var a,b,notes=[],err='';
+    if(cur.dbl==='A'){a=300;b=0;}
+    else if(cur.dbl==='B'){a=0;b=300;}
+    else{
+      a=parse($('ia').value);b=parse($('ib').value);
+      if(isNaN(a)||isNaN(b)){err='請輸入牌面分';a=isNaN(a)?0:a;b=isNaN(b)?0:b;}
+    }
+    if(cur.dbl!=='none')notes.push(cur.dbl+' 隊 Win-Win');
+    ['A','B'].forEach(function(k){
+      var c=cur[k];
+      if(c.t>0){
+        if(c.r===0){if(!err)err=k+' 隊地主請選成功或失敗';return;}
+        var v=(c.t===1?100:200)*(c.r===1?1:-1);
+        if(k==='A')a+=v;else b+=v;
+        notes.push(k+' 隊'+(c.t===1?'小':'大')+'地主'+(c.r===1?'成功':'失敗'));
+      }
+    });
+    return{a:a,b:b,notes:notes.join('、'),err:err};
+  }
+
+  function renderRound(){
+    makeSeg($('dbl'),[
+      {label:'無',value:'none',on:cur.dbl==='none'},
+      {label:'A Win-Win',value:'A',on:cur.dbl==='A'},
+      {label:'B Win-Win',value:'B',on:cur.dbl==='B'}
+    ],setDbl);
+    var dis=cur.dbl!=='none';
+    $('ia').disabled=dis;$('ib').disabled=dis;$('sa').disabled=dis;$('sb').disabled=dis;
+    ['A','B'].forEach(function(k){
+      var c=cur[k];
+      makeSeg($('t'+k),[
+        {label:'無',value:0,on:c.t===0},
+        {label:'小',value:1,on:c.t===1},
+        {label:'大',value:2,on:c.t===2}
+      ],function(v){setCall(k,v);});
+      var rEl=$('r'+k);
+      if(c.t>0){
+        rEl.style.display='';
+        makeSeg(rEl,[
+          {label:'成功',value:1,on:c.r===1,cls:'ok',disabled:blocked(k)},
+          {label:'失敗',value:2,on:c.r===2,cls:'bad'}
+        ],function(v){setResult(k,v);});
+      }else{
+        rEl.style.display='none';rEl.innerHTML='';
+      }
+    });
+    updatePreview();
+  }
+
+  function updatePreview(){
+    var r=calc();
+    $('prev').textContent='A '+fmt(r.a)+' ／ B '+fmt(r.b);
+    if($('err').textContent&&!r.err)$('err').textContent='';
+  }
+
+  function totals(){
+    var ta=0,tb=0;
+    S.hist.forEach(function(r){ta+=r.a;tb+=r.b;});
+    return{a:ta,b:tb};
+  }
+
+  function renderTotals(){
+    var t=totals();
+    $('ta').textContent=t.a;$('tb').textContent=t.b;
+    $('ga').textContent=t.a>=S.goal?'已達標':'還差 '+(S.goal-t.a);
+    $('gb').textContent=t.b>=S.goal?'已達標':'還差 '+(S.goal-t.b);
+    var w=$('win');
+    if(t.a>=S.goal||t.b>=S.goal){
+      w.hidden=false;
+      if(t.a>t.b)w.textContent='A 隊獲勝';
+      else if(t.b>t.a)w.textContent='B 隊獲勝';
+      else w.textContent='雙方同分，再打一局';
+    }else{w.hidden=true;w.textContent='';}
+  }
+
+  function renderHist(){
+    var el=$('hist');
+    el.innerHTML='';
+    if(!S.hist.length){
+      var li=document.createElement('li');li.className='empty';li.textContent='還沒有紀錄，打完一局後按「確定這局」。';
+      el.appendChild(li);
+    }else{
+      var ta=0,tb=0,rows=[];
+      S.hist.forEach(function(r,i){
+        ta+=r.a;tb+=r.b;
+        rows.push({i:i,r:r,ta:ta,tb:tb});
+      });
+      rows.reverse().forEach(function(x){
+        var li=document.createElement('li');
+        var l1=document.createElement('div');l1.className='r1';
+        var s1=document.createElement('span');s1.textContent='第 '+(x.i+1)+' 局　'+x.r.a+' : '+x.r.b;
+        var s2=document.createElement('span');s2.textContent='累計 '+x.ta+' : '+x.tb;
+        l1.appendChild(s1);l1.appendChild(s2);li.appendChild(l1);
+        if(x.r.n){var l2=document.createElement('div');l2.className='r2';l2.textContent=x.r.n;li.appendChild(l2);}
+        el.appendChild(li);
+      });
+    }
+    $('cnt').textContent=S.hist.length?'共 '+S.hist.length+' 局':'';
+    $('undo').disabled=!S.hist.length;
+    $('reset').disabled=!S.hist.length;
+  }
+
+  function renderAll(){renderTotals();renderHist();renderRound();}
+
+  function sync(from){
+    var a=$('ia'),b=$('ib');
+    if(from==='a'){var v=parse(a.value);b.value=isNaN(v)?'':String(200-v);}
+    else{var w=parse(b.value);a.value=isNaN(w)?'':String(200-w);}
+    updatePreview();
+  }
+  function flip(id,from){
+    var el=$(id),v=parse(el.value);
+    if(isNaN(v))return;
+    el.value=String(-v);
+    sync(from);
+  }
+
+  function commit(){
+    var r=calc();
+    if(r.err){$('err').textContent=r.err;return;}
+    $('err').textContent='';
+    S.hist.push({a:r.a,b:r.b,n:r.notes});
+    save();
+    cur=blank();
+    $('ia').value='';$('ib').value='';
+    renderAll();
+  }
+
+  function undo(){
+    if(!S.hist.length)return;
+    S.hist.pop();save();renderAll();
+  }
+
+  function disarmReset(){
+    resetArmed=false;clearTimeout(resetTimer);
+    $('reset').textContent='重新開始';
+  }
+  function reset(){
+    if(!resetArmed){
+      resetArmed=true;
+      $('reset').textContent='再按一次清空';
+      resetTimer=setTimeout(disarmReset,3000);
+      return;
+    }
+    disarmReset();
+    S.hist=[];save();
+    cur=blank();
+    $('ia').value='';$('ib').value='';
+    $('err').textContent='';
+    renderAll();
+  }
+
+  $('ia').addEventListener('input',function(){sync('a');});
+  $('ib').addEventListener('input',function(){sync('b');});
+  $('sa').addEventListener('click',function(){flip('ia','a');});
+  $('sb').addEventListener('click',function(){flip('ib','b');});
+  $('commit').addEventListener('click',commit);
+  $('undo').addEventListener('click',undo);
+  $('reset').addEventListener('click',reset);
+  $('goal').addEventListener('input',function(){
+    var v=parse($('goal').value);
+    if(!isNaN(v)&&v>0){S.goal=v;save();renderTotals();}
+  });
+
+  load();
+  $('goal').value=S.goal;
+  renderAll();
+})();
+</script>
+</body>
+</html>
