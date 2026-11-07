@@ -30,7 +30,7 @@ h1{font-size:20px;font-weight:600;margin:0}
 h2{font-size:15px;font-weight:600;margin:0 0 10px}
 .top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
 .goal{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--muted)}
-.goal input{width:84px;text-align:center}
+.goal select{font:inherit;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:10px;min-height:44px;width:96px;padding:0 10px;text-align:center;text-align-last:center}
 input{font:inherit;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:10px;
   min-height:44px;padding:0 10px;width:100%}
 input:disabled{opacity:.4}
@@ -105,7 +105,7 @@ input[type=range]:disabled{opacity:.35}
 <main>
   <div class="top">
     <h1>Tichu 計分器</h1>
-    <label class="goal">目標分數 <input id="goal" type="number" inputmode="numeric" aria-label="目標分數"></label>
+    <label class="goal">目標分數 <select id="goal" aria-label="目標分數"></select></label>
   </div>
 
   <section class="totals" aria-label="總分">
@@ -161,6 +161,7 @@ input[type=range]:disabled{opacity:.35}
   var KEY='tichu-scorer-v1';
   var S={goal:1000,hist:[]};
   var PMIN=-25,PMAX=225,PDEF=100;
+  var GOALS=[500,600,700,800,900,1000];
   var cur=blank();
   var resetArmed=false,resetTimer=null;
 
@@ -403,13 +404,24 @@ input[type=range]:disabled{opacity:.35}
   $('commit').addEventListener('click',commit);
   $('undo').addEventListener('click',undo);
   $('reset').addEventListener('click',reset);
-  $('goal').addEventListener('input',function(){
+  function snapGoal(v){
+    var best=GOALS[GOALS.length-1];
+    GOALS.forEach(function(g){if(Math.abs(g-v)<=Math.abs(best-v))best=g;});
+    return best;
+  }
+  GOALS.forEach(function(g){
+    var o=document.createElement('option');
+    o.value=String(g);o.textContent=String(g);
+    $('goal').appendChild(o);
+  });
+  $('goal').addEventListener('change',function(){
     var v=parse($('goal').value);
-    if(!isNaN(v)&&v>0){S.goal=v;save();renderTotals();}
+    if(GOALS.indexOf(v)>=0){S.goal=v;save();renderTotals();}
   });
 
   load();
-  $('goal').value=S.goal;
+  S.goal=snapGoal(S.goal);
+  $('goal').value=String(S.goal);
   renderAll();
 })();
 </script>
