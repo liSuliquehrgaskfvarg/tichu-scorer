@@ -7,15 +7,15 @@
 <style>
 :root{
   --bg:#eceff3;--surface:#ffffff;--ink:#14181f;--muted:#5b6472;--line:#d5dae1;
-  --a:#2155d6;--a-tint:#e3ebfc;--b:#b8470b;--b-tint:#fbe9dc;
-  --ok:#11794a;--ok-tint:#dcf3e7;--bad:#b42318;--bad-tint:#fde4e1;
+  --a:#2155d6;--a-tint:#e3ebfc;--b:#b91c1c;--b-tint:#fee2e2;
+  --ok:#11794a;--ok-tint:#dcf3e7;--bad:#4b5563;--bad-tint:#e5e7eb;
   --on:#ffffff;
 }
 @media (prefers-color-scheme:dark){
   :root{
     --bg:#0f1217;--surface:#181c23;--ink:#eef1f5;--muted:#9aa4b2;--line:#2c333d;
-    --a:#7aa2ff;--a-tint:#17233f;--b:#ff9a5c;--b-tint:#3a2314;
-    --ok:#4cc38a;--ok-tint:#12301f;--bad:#ff8a80;--bad-tint:#3a1a17;
+    --a:#7aa2ff;--a-tint:#17233f;--b:#f87171;--b-tint:#3a1717;
+    --ok:#4cc38a;--ok-tint:#12301f;--bad:#9ca3af;--bad-tint:#2a2f37;
     --on:#0f1217;
   }
 }
@@ -85,8 +85,14 @@ button:disabled{opacity:.3;cursor:not-allowed}
 .pv:disabled{opacity:.5}
 .adj{display:flex;align-items:center;gap:10px;margin-top:10px}
 .rngw{flex:1;min-width:0}
-input[type=range]{width:100%;min-height:44px;padding:0;border:0;background:transparent;accent-color:var(--a)}
-input[type=range].B{accent-color:var(--b)}
+input[type=range]{width:100%;min-height:44px;padding:0;border:0;background:transparent;-webkit-appearance:none;appearance:none;--th:var(--a);--p:50%}
+input[type=range].B{--th:var(--b)}
+input[type=range]::-webkit-slider-runnable-track{height:8px;border-radius:4px;border:1px solid var(--th);
+  background:linear-gradient(to right,var(--th) 0,var(--th) var(--p),var(--surface) var(--p),var(--surface) 100%)}
+input[type=range]::-moz-range-track{height:8px;border-radius:4px;border:1px solid var(--th);background:var(--surface)}
+input[type=range]::-moz-range-progress{height:8px;border-radius:4px;background:var(--th)}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:16px;height:16px;margin-top:-5px;border-radius:50%;background:var(--th);border:1px solid var(--th)}
+input[type=range]::-moz-range-thumb{width:14px;height:14px;border-radius:50%;background:var(--th);border:1px solid var(--th)}
 input[type=range]:disabled{opacity:.35}
 .rng-ends{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-top:-6px}
 .step{display:flex;flex-direction:column;gap:6px;flex:none}
@@ -327,6 +333,7 @@ input[type=range]:disabled{opacity:.35}
     var dis=cur.dbl!=='none',s=cur.side,v=sideVal();
     var rng=$('rng');
     rng.value=String(v);
+    rng.style.setProperty('--p',((v-PMIN)/(PMAX-PMIN)*100)+'%');
     rng.className=s;
     rng.disabled=dis;
     rng.setAttribute('aria-label',s+' 隊牌面分滑桿');
